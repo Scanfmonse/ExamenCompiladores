@@ -13,9 +13,9 @@ cpp_end = {
     ';','.',','
 }
 
-cpp_operador = {
-    '+','++','*','<<','!=','&&','=','#','<','>'
-}
+cpp_operador = [
+    '++', '--', '<<', '!=', '&&', '+=', '-=', '>=', '<=', '=', '+', '*', '<', '>', '#'
+]
 
 cpp_contenedores = {
     '(',')','{','}'
@@ -24,9 +24,6 @@ cpp_contenedores = {
 # Clasificaciones
 keywords = set()
 countRes = 0
-
-numbers = set ()
-countNum = 0
 
 delimit = set ()
 countDel = 0
@@ -37,11 +34,30 @@ countOpe = 0
 contenedor = set ()
 countCont = 0
 
+constantes = []  # Constantes numéricas y cadenas unificadas
+countConst = 0
+
 with open('archivo.cpp', 'r') as f:
     content = f.read()
     content = re.sub(r'//.*|/\*[\s\S]*?\*/', '', content)
     # Extrae las palabras
     words = re.findall(r'\b\w+\b|[;,.]', content) 
+
+
+    pattern_operators = '|'.join(re.escape(op) for op in sorted(cpp_operador, key=lambda x: -len(x)))
+
+    # Buscamos todos los operadores en el contenido
+    found_operators = re.findall(pattern_operators, content)
+
+    for op in found_operators:
+        operador.add(op)
+        countOpe += 1
+    
+    # Buscar constantes numéricas (enteros y decimales)
+    numeros = re.findall(r'\b\d+(\.\d+)?\b', content)
+    for match in re.finditer(r'\b\d+(\.\d+)?\b', content):
+        constantes.append(match.group())
+        countConst += 1
 
     for word in words:
         if word in cpp_keywords:
@@ -52,19 +68,9 @@ with open('archivo.cpp', 'r') as f:
         if word in cpp_keywords:
             keywords.add(word)
             countRes+=1
-        if re.match(r'-?\b\d+(\.\d+)?\b', word):
-            # -r para los numeros negativos
-            # \b para asegurar que son numeros y que no viene pegado a una palabra
-            # \d+ para los numeros de mas de 1 digito
-            # (\.\d+)? para los decimales
-            numbers.add(word)
-            countNum+=1
         if word in cpp_end :
             delimit.add(word)
             countDel+=1
-        if word in cpp_operador :
-            operador.add(word)
-            countOpe+=1
         if word in cpp_contenedores :
             contenedor.add(word)
             countCont+=1
@@ -75,41 +81,46 @@ def charArchiv(nombre_archivo):   #Obtenemos todos los chars del archivo
         chars = list(contenido)  #Convierte el contenido en una lista de chars
         return chars
 
-chars = charArchiv('archivo.cpp')
-print(chars)  #Muestra todos los chars del archivo
-print("Total de chars:", len(chars))
+#chars = charArchiv('archivo.cpp')
+#print(chars)  #Muestra todos los chars del archivo
+#print("Total de chars:", len(chars))
 
-def constantesCadenas(chars): #con esta funcion obtenemos las constantes que estan dentro de comillas
+# Función para detectar cadenas entre comillas
+def constantesCadenas(chars):
     cadenas = []
-    en_cadena = False #Esta variable nos ayuda a definir si ya estamos dentro de una cadena o no
-    #por lo que al inicio tiene que ser falsa ya que no hemos entrado en alguna cadena
+    en_cadena = False
     cadenaEncontrada = ''
 
-    for c in chars:  #vamos recorriendo todos los chars del archivo
+    for c in chars:
         if c == '"':
-            if en_cadena:   #cuando encontramos las primeras comillas ahora esto es true 
-                cadenas.append(cadenaEncontrada) 
-                cadenaEncontrada = '' #las cadenas encontradas se almacenan
-                en_cadena = False 
+            if en_cadena:
+                cadenas.append(f'"{cadenaEncontrada}"')  # Agregar las comillas
+                cadenaEncontrada = ''
+                en_cadena = False
             else:
                 en_cadena = True
         elif en_cadena:
-            cadenaEncontrada += c  #juntamos todos los valores dentro de las comillas
-
+            cadenaEncontrada += c
     return cadenas
 
+chars = charArchiv('archivo.cpp')  # Pasa el nombre del archivo como parámetro
+
+def charArchiv(chars):  
+    with open(chars, 'r', encoding='utf-8') as archivo:
+        contenido = archivo.read()
+        return list(contenido)
+
+
+
 cadenas = constantesCadenas(chars)
+constantes.extend(cadenas)
+countConst += len(cadenas)
 
-print("Cadenas encontradas entre comillas:")
-for i, cad in enumerate(cadenas, 1):
-    print(f'{i}: "{cad}"')
-
-print("Palabras reservadas:", sorted(keywords))
-print("Numero de palabras reservadas: ", countRes) 
-print("Numero de valores numericos en el codigo: ", countNum) #ME MARCA UN NUMERO MAS PERO NO SE DONDEEE 
-print("Numero de delimitadores en el codigo: ", countDel) 
-print("     Delimitadores encontrados", sorted(delimit))
-print("Numero de operadores en el codigo: ", countOpe) 
-print("     Operadores encontrados", sorted(operador))
-print("Numero de contenedores en el codigo: ", countCont)
-print("     Contenedores encontrados", sorted(contenedor))
+# --- Resultados ---
+print("Número de palabras reservadas:", countRes)
+print("Número de delimitadores en el código:", countDel)
+print("Número de operadores en el código:", countOpe)
+print("Número de contenedores en el código:", countCont)
+print("Constantes encontradas en el código:", countConst)
+for i, c in enumerate(constantes, 1):
+    print(f'{i}: {c}')
