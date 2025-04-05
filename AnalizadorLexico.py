@@ -124,3 +124,4 @@ print("Número de contenedores en el código:", countCont)
 print("Constantes encontradas en el código:", countConst)
 for i, c in enumerate(constantes, 1):
     print(f'{i}: {c}')
+
