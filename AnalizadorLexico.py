@@ -6,20 +6,23 @@ cpp_keywords = {
     'case', 'default', 'return', 'break', 'continue', 'class', 'struct', 'public',
     'private', 'protected', 'void', 'static', 'const', 'new', 'delete', 'try',
     'catch', 'throw', 'namespace', 'using', 'include', 'define', 'template','cout',
-    'endl','string', 'bool', 'using', 'iostream' ,'std', 'main'
+    'endl','string', 'bool', 'using', 'iostream' ,'std', 'main','true','false'
 }
 #Comentario
 cpp_end = {
-    ';','.',','
+    ';',','
 }
 
 cpp_operador = [
-    '++', '--', '<<', '!=', '&&', '+=', '-=', '>=', '<=', '=', '+', '*', '<', '>', '#'
+    '++', '--', '<<', '!=', '&&', '+=', '-=', '>=', '<=', '=', '+', '*', '<', '>', '#',':','::z x'
 ]
 
 cpp_contenedores = {
     '(',')','{','}'
 }
+
+tipos_dato = ['int', 'float', 'double', 'char', 'bool', 'string']
+patron_variables = r'\b(?:' + '|'.join(tipos_dato) + r')\s+([a-zA-Z_]\w*)'
 
 # Clasificaciones
 keywords = set()
@@ -36,6 +39,9 @@ countCont = 0
 
 constantes = []  # Constantes numéricas y cadenas unificadas
 countConst = 0
+
+countVar = 0
+
 
 with open('archivo.cpp', 'r') as f:
     content = f.read()
@@ -74,16 +80,20 @@ with open('archivo.cpp', 'r') as f:
         if word in cpp_contenedores :
             contenedor.add(word)
             countCont+=1
+    
+nombres_variables = re.findall(patron_variables, content)
+variables = {var for var in nombres_variables if var not in cpp_keywords}
+
+conteo_variables = {}
+for var in variables:
+    apariciones = len(re.findall(r'\b' + re.escape(var) + r'\b', content))
+    conteo_variables[var] = apariciones
         
 def charArchiv(nombre_archivo):   #Obtenemos todos los chars del archivo
     with open(nombre_archivo, 'r', encoding='utf-8') as archivo:
         contenido = archivo.read()
         chars = list(contenido)  #Convierte el contenido en una lista de chars
         return chars
-
-#chars = charArchiv('archivo.cpp')
-#print(chars)  #Muestra todos los chars del archivo
-#print("Total de chars:", len(chars))
 
 # Función para detectar cadenas entre comillas
 def constantesCadenas(chars):
@@ -117,11 +127,14 @@ constantes.extend(cadenas)
 countConst += len(cadenas)
 
 # --- Resultados ---
+# print("Número de palabras reservadas:", keywords)
 print("Número de palabras reservadas:", countRes)
 print("Número de delimitadores en el código:", countDel)
 print("Número de operadores en el código:", countOpe)
-print("Número de contenedores en el código:", countCont)
+print("Número de contenedores en el código:", countCont/2)
 print("Constantes encontradas en el código:", countConst)
 for i, c in enumerate(constantes, 1):
     print(f'{i}: {c}')
-
+print("Total de usos de variables en el código:", sum(conteo_variables.values()))
+for nombre, conteo in conteo_variables.items():
+    print(f'{nombre}: {conteo}')
