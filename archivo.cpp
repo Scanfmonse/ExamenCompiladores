@@ -1,10 +1,16 @@
+
+
+
+
+
 #include <iostream>
+using  namespace std;
 
-using namespace std;
-
-int main(){
-    for (int i=0;i<5;i++)
-        for (int j=0;j<5;j++)
-            if(i==j)
-            cout<<"hola mundo"<<endl;
+int main() {
+    int a = 10;
+    if (a > 5) {
+        cout << "Mayor que 5" << endl;
+    }
+    return 0;
 }
+
