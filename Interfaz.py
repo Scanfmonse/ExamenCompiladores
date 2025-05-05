@@ -2,6 +2,7 @@ from PIL import Image, ImageDraw, ImageFont, ImageTk
 import tkinter as tk
 from tkinter import filedialog
 import AnalizadorLexico as analizador
+import AnalizadorSintactico
 
 ventana = tk.Tk()
 ventana.title("Analizador Léxico")
@@ -34,6 +35,7 @@ def ejecutar_analisis():
     codigo = entrada.get("1.0", tk.END)
     entrada.config(state=tk.DISABLED)
     resultado_analisis = analizador.analizar_codigo(codigo)
+    AnalizadorSintactico.analizar_cpp_palabra_a_palabra("archivo.cpp")
     resultado.config(state=tk.NORMAL)
     resultado.delete("1.0", tk.END)
     resultado.insert(tk.END, resultado_analisis)
@@ -63,6 +65,5 @@ boton_analizar = tk.Button(
     font=("Consolas", 14), command=ejecutar_analisis, state=tk.DISABLED
 )
 boton_analizar.place(x=200, y=600)
-
 
 ventana.mainloop()

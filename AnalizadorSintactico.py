@@ -1,8 +1,9 @@
 import re
+import AnalizadorLexico
 
 def tokenizar(linea):
     # Separa palabras y símbolos importantes como tokens individuales
-    return re.findall(r'[a-zA-Z_][a-zA-Z0-9_]*|[#{}();<>=!+\-*/]|"[^"]*"|<<|>>|==|!=|<=|>=', linea)
+    return re.findall(r'[a-zA-Z_][a-zA-Z0-9_]*|[#@$%^&{}();<>=!+\-*/]|"[^"]*"|<<|>>|==|!=|<=|>=', linea)
 
 def analizar_cpp_palabra_a_palabra(ruta_archivo):
     with open(ruta_archivo, 'r') as archivo:
@@ -55,6 +56,34 @@ def analizar_cpp_palabra_a_palabra(ruta_archivo):
         if 'if' in tokens:
             if "(" not in tokens or ")" not in tokens:
                 errores.append(f"Línea {linea_num}: 'if' sin paréntesis de condición.")
+        
+        
+
+        for i, token in enumerate(tokens):
+            if token not in AnalizadorLexico.keywords and \
+                token not in AnalizadorLexico.delimit and \
+                token not in AnalizadorLexico.operador and \
+                token not in AnalizadorLexico.contenedor and \
+                token not in AnalizadorLexico.constantes and \
+                token not in AnalizadorLexico.conteo_variables:
+                    errores.append(f"Línea {linea_num + 1}: palabra no identificada '{token}'")
+
+        couts = 0
+        #Que cuando se imprima un texto siempre tenga sus dos << 
+        if 'cout' in tokens:                               
+            for token in tokens:
+                if token == '<':
+                    couts = couts + 1
+                    print(f"Couts{couts}")
+        
+        division = couts % 2
+        if division != 0:
+            errores.append(f"Línea {linea_num}: cout incorrecto") 
+
+        if 'return' in tokens or 'endl' in tokens:
+            if tokens[-1] != ';':
+                print(f"token final {tokens[-1]}")
+                errores.append(f"Línea {linea_num}: Falta ';'")
 
     #Ver si quedaron llaves abiertas
     if pila_llaves:
@@ -68,5 +97,4 @@ def analizar_cpp_palabra_a_palabra(ruta_archivo):
     else:
         print("\nArchivo sintácticamente correcto (nivel palabra a palabra básico).")
 
-# Prueba
-analizar_cpp_palabra_a_palabra("archivo.cpp")
+#analizar_cpp_palabra_a_palabra("archivo.cpp")

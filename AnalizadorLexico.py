@@ -1,4 +1,10 @@
 import re
+keywords = set()
+delimit = set()
+operador = set()
+contenedor = set()
+constantes = []
+conteo_variables = {}
 
 def analizar_codigo(content):
     cpp_keywords = {
@@ -9,7 +15,7 @@ def analizar_codigo(content):
         'endl', 'string', 'bool', 'iostream', 'std', 'main', 'true', 'false'
     }
     cpp_end = {';', ','}
-    cpp_operador = ['++', '--', '<<', '!=', '&&', '+=', '-=', '>=', '<=', '+', '*', '<', '>', '#', ':', '==']
+    cpp_operador = ['++', '--', '<<', '!=', '&&', '+=', '-=', '>=', '<=', '+', '*', '%','<', '>', '#', ':', '==', '=']
     cpp_contenedores = {'(', ')', '{', '}'}
     tipos_dato = ['int', 'float', 'double', 'char', 'bool', 'string']
     patron_variables = r'\b(?:' + '|'.join(tipos_dato) + r')\s+([a-zA-Z_]\w*)'
@@ -18,12 +24,7 @@ def analizar_codigo(content):
     content = re.sub(r'//.*|/\*[\s\S]*?\*/', '', content)
 
     # Inicializar contadores y conjuntos
-    keywords = set()
-    delimit = set()
-    operador = set()
-    contenedor = set()
-    constantes = []
-    conteo_variables = {}
+    
 
     countRes = countDel = countOpe = countCont = countConst = 0
 
