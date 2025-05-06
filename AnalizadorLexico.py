@@ -15,12 +15,12 @@ def analizar_codigo(content):
         'inline', 'int', 'long', 'register', 'restrict', 'return', 'short',
         'signed', 'sizeof', 'static', 'struct', 'switch', 'typedef', 'union',
         'unsigned', 'void', 'volatile', 'while',
-        # Específicas de C++
         'bool', 'class', 'const_cast', 'delete', 'dynamic_cast', 'explicit',
         'export', 'false', 'friend', 'mutable', 'namespace', 'new', 'operator',
         'private', 'protected', 'public', 'reinterpret_cast', 'static_cast',
         'template', 'this', 'throw', 'true', 'try', 'typeid', 'typename',
-        'using', 'virtual', 'wchar_t', 'cout', 'cin', 'endl', 'return'
+        'using', 'virtual', 'wchar_t', 'cout', 'cin', 'endl', 'return','stdio','printf','scanf'        
+        
     }
 
     cpp_end = {';', ','}

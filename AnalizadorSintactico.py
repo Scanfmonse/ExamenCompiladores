@@ -8,12 +8,12 @@ def tokenizar(linea):
 def analizar_cpp_palabra_a_palabra(ruta_archivo):
     extension = os.path.splitext(ruta_archivo)[1]
     es_cpp = extension == '.cpp'
-    es_c = extension == '.c'
 
     with open(ruta_archivo, 'r') as archivo:
         lineas = archivo.readlines()
 
     errores = []
+    salida = [] 
     pila_llaves = []
     pila_par = []
     linea_num = 0
@@ -27,26 +27,35 @@ def analizar_cpp_palabra_a_palabra(ruta_archivo):
 
         print(f"Línea {linea_num}: {tokens}")
 
-        # Validación de #include
+        #VALIDACION COMILLAS
+        if linea.count('"') % 2 != 0:
+            errores.append(f"Línea {linea_num}: Cadena de texto sin cerrar.")
+
+        #VALIDACION LIBRERIA SI ES .CPP
         if linea_num == 1:
+            print("ENTRE AL IF")
             if es_cpp:
                 if len(tokens) >= 5 and tokens[:5] == ['#', 'include', '<', 'iostream', '>']:
-                    print("Librería válida detectada en C++.")
+                    print("Librería válida detectada (C++).")
                 else:
-                    errores.append(f"Línea {linea_num}: '#include <iostream>' mal formado / escrito")
-            elif es_c:
-                linea_sin_espacios = linea.strip().replace(" ", "")
-                if re.match(r'#include(<stdio\.h>|"stdio\.h")', linea_sin_espacios):
-                    print("Librería válida detectada en C.")
-                else:
-                    errores.append(f"Línea {linea_num}: '#include <stdio.h>' mal formado / escrito")
-
-        # Validación de 'using namespace std;' solo en C++
-        if es_cpp and linea_num == 2:
-            if len(tokens) >= 4 and tokens[:4] == ['using', 'namespace', 'std', ';']:
-                print("Namespace válido detectado en C++")
+                    errores.append(f"Línea {linea_num}: '#include <iostream>' mal formado / escrito (esperado en C++)")
             else:
-                errores.append(f"Línea {linea_num}: 'using namespace std;' mal formado / escrito")
+                if len(tokens) >= 7 and tokens[:7] == ['#', 'include', '<', 'stdio', '.', 'h', '>']:
+                    print("Librería válida detectada (C).")
+                else:
+                    errores.append(f"Línea {linea_num}: '#include <stdio.h>' mal formado / escrito (esperado en C)")
+        #VALIDACION SI ES .C
+        if linea_num == 2:
+            if es_cpp:
+                if len(tokens) >= 4 and tokens[:4] == ['using', 'namespace', 'std', ';']:
+                    print("Namespace válido detectado (C++).")
+                else:
+                    errores.append(f"Línea {linea_num}: 'using namespace std;' mal formado / escrito (esperado en C++)")
+            else:
+                # En C no se espera esta línea
+                pass
+
+
 
         # Balance de llaves y paréntesis
         for token in tokens:
@@ -126,12 +135,12 @@ def analizar_cpp_palabra_a_palabra(ruta_archivo):
         for token in tokens:
             if re.match(r'[a-zA-Z_]\w*', token):
                 if token not in AnalizadorLexico.keywords and \
-                   token not in AnalizadorLexico.delimit and \
-                   token not in AnalizadorLexico.operador and \
-                   token not in AnalizadorLexico.contenedor and \
-                   token not in AnalizadorLexico.constantes and \
-                   token not in AnalizadorLexico.conteo_variables and \
-                   token not in variables_declaradas:
+                token not in AnalizadorLexico.delimit and \
+                token not in AnalizadorLexico.operador and \
+                token not in AnalizadorLexico.contenedor and \
+                token not in AnalizadorLexico.constantes and \
+                token not in AnalizadorLexico.conteo_variables and \
+                token not in variables_declaradas:
                     errores.append(f"Línea {linea_num}: Identificador no declarado o inválido: '{token}'")
 
     if pila_llaves:
@@ -140,8 +149,13 @@ def analizar_cpp_palabra_a_palabra(ruta_archivo):
         errores.append("Error: hay paréntesis sin cerrar.")
 
     if errores:
+        salida.append("Errores encontrados:")
+        salida.extend(errores)
         print("\nErrores encontrados:")
         for error in errores:
             print(error)
     else:
         print("\nArchivo sintácticamente correcto (nivel palabra a palabra básico).")
+        salida.append("Archivo sintácticamente correcto (nivel palabra a palabra básico).")
+
+    return "\n".join(salida)
