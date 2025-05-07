@@ -10,11 +10,11 @@ conteo_variables = {}
 
 def analizar_codigo(content):
     cpp_keywords = {
-        'auto', 'break', 'case', 'char', 'const', 'continue', 'default', 'do',
+        'auto', 'break', 'case', 'char', 'const', 'continue', 'default', 'do', 'string',
         'double', 'else', 'enum', 'extern', 'float', 'for', 'goto', 'if',
         'inline', 'int', 'long', 'register', 'restrict', 'return', 'short',
         'signed', 'sizeof', 'static', 'struct', 'switch', 'typedef', 'union',
-        'unsigned', 'void', 'volatile', 'while',
+        'unsigned', 'void', 'volatile', 'while', 'include', 'std', 'iostream',
         'bool', 'class', 'const_cast', 'delete', 'dynamic_cast', 'explicit',
         'export', 'false', 'friend', 'mutable', 'namespace', 'new', 'operator',
         'private', 'protected', 'public', 'reinterpret_cast', 'static_cast',
