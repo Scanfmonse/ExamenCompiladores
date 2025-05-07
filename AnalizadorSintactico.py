@@ -82,8 +82,11 @@ def analizar_cpp_palabra_a_palabra(ruta_archivo):
         # -------------------------
         # Validación de arreglos
         # -------------------------
-        if tokens and tokens[0] in ['int', 'float', 'string', 'char'] and '[' in tokens and ']' in tokens:
-            tipo = tokens[0]
+        # -------------------------
+        # Validación de arreglos
+        # -------------------------
+        tipo = tokens[0] if tokens else ''
+        if tipo in ['int', 'float', 'string', 'char'] and '[' in tokens and ']' in tokens:
             try:
                 var_name = tokens[1]
                 index_open = tokens.index('[')
@@ -95,8 +98,11 @@ def analizar_cpp_palabra_a_palabra(ruta_archivo):
                     errores.append(f"Línea {linea_num}: nombre de variable de arreglo inválido")
 
                 # Validar tamaño
-                if size_token and not re.fullmatch(r'\d+', size_token):
-                    errores.append(f"Línea {linea_num}: tamaño del arreglo inválido")
+                if size_token:
+                    if not re.fullmatch(r'\d+', size_token):
+                        errores.append(f"Línea {linea_num}: tamaño del arreglo inválido")
+                else:
+                    errores.append(f"Línea {linea_num}: tamaño del arreglo no especificado")
 
                 # Validar finalización con ;
                 if tokens[-1] != ';' and '=' not in tokens:
@@ -105,14 +111,14 @@ def analizar_cpp_palabra_a_palabra(ruta_archivo):
                 # Validar inicialización si hay '='
                 if '=' in tokens:
                     igual_index = tokens.index('=')
-                    if '{' not in tokens[igual_index:] or '}' not in tokens[igual_index:]:
+                    if tokens[igual_index + 1] != '{' or tokens[-2] != '}':
                         errores.append(f"Línea {linea_num}: inicialización de arreglo mal formada")
 
                 if var_name in variables_declaradas:
                     errores.append(f"Línea {linea_num}: Arreglo '{var_name}' ya declarado anteriormente.")
                 else:
                     variables_declaradas.add(var_name)
-                continue
+                continue  # saltar verificación adicional de variables
 
             except Exception:
                 errores.append(f"Línea {linea_num}: error general en la declaración de arreglo")
