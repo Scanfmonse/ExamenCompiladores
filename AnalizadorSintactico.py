@@ -1,12 +1,20 @@
+# analizador_sintactico.py
+
 import re
 import AnalizadorLexico
 import os
 
 def tokenizar(linea):
-    return re.findall(r'[a-zA-Z_][a-zA-Z0-9_]*|[#@$%^&{}();<>=!+\-*/.,]|"[^"]*"|<<|>>|==|!=|<=|>=', linea)
-#return re.findall(r'[a-zA-Z_][a-zA-Z0-9_]*|[#@$%^&{}();<>=!+\-*/.,]|"[^"]*"|\'[^\']*\'|<<|>>|==|!=|<=|>=', linea)
-
-#
+    patron = r'''
+        "[^"]*"              |  # Cadenas
+        '[^']'               |  # Caracteres
+        \d+\.\d+             |  # Flotantes
+        \d+                  |  # Enteros
+        <<|>>|==|!=|<=|>=    |  # Operadores dobles
+        [a-zA-Z_]\w*         |  # Identificadores
+        [#@$%^&{}\[\]();<>=!+\-*/.,]  # Símbolos individuales (agregados corchetes)
+    '''
+    return re.findall(patron, linea, re.VERBOSE)
 
 def analizar_cpp_palabra_a_palabra(ruta_archivo):
     extension = os.path.splitext(ruta_archivo)[1]
@@ -19,7 +27,6 @@ def analizar_cpp_palabra_a_palabra(ruta_archivo):
     salida = [] 
     pila_llaves = []
     pila_par = []
-    linea_num = 0
     variables_declaradas = set()
 
     for i, linea in enumerate(lineas):
@@ -28,39 +35,9 @@ def analizar_cpp_palabra_a_palabra(ruta_archivo):
         if not tokens:
             continue
 
-        print(f"Línea {linea_num}: {tokens}")
-
-        #VALIDACION COMILLAS
         if linea.count('"') % 2 != 0:
             errores.append(f"Línea {linea_num}: Cadena de texto sin cerrar.")
 
-        #VALIDACION LIBRERIA SI ES .CPP
-        if linea_num == 1:
-            print("ENTRE AL IF")
-            #if es_cpp:
-            if len(tokens) >= 5 and tokens[:5] == ['#', 'include', '<', 'iostream', '>']:
-                print("Librería válida detectada (C++).")
-            else:
-                errores.append(f"Línea {linea_num}: '#include <iostream>' mal formado / escrito (esperado en C++)")
-            #else:
-                #if len(tokens) >= 7 and tokens[:7] == ['#', 'include', '<', 'stdio', '.', 'h', '>']:
-                    #print("Librería válida detectada (C).")
-                #else:
-                    #errores.append(f"Línea {linea_num}: '#include <stdio.h>' mal formado / escrito (esperado en C)")
-        #VALIDACION SI ES .C
-        if linea_num == 2:
-            #if es_cpp:
-            if len(tokens) >= 4 and tokens[:4] == ['using', 'namespace', 'std', ';']:
-                print("Namespace válido detectado (C++).")
-            else:
-                errores.append(f"Línea {linea_num}: 'using namespace std;' mal formado / escrito (esperado en C++)")
-            #else:
-                # En C no se espera esta línea
-                #pass
-
-
-
-        # Balance de llaves y paréntesis
         for token in tokens:
             if token == '{':
                 pila_llaves.append('{')
@@ -77,17 +54,13 @@ def analizar_cpp_palabra_a_palabra(ruta_archivo):
                 else:
                     errores.append(f"Línea {linea_num}: paréntesis ')' sin abrir.")
 
-        # Validación de main
         if 'main' in tokens:
-            if 'int' not in tokens or '(' not in tokens or ')' not in tokens or '{' not in tokens:
+            if 'int' not in tokens or '(' not in tokens or ')' not in tokens:
                 errores.append(f"Línea {linea_num}: Declaración incorrecta de la función main.")
 
-        # Validación de if
-        if 'if' in tokens:
-            if '(' not in tokens or ')' not in tokens:
-                errores.append(f"Línea {linea_num}: 'if' sin paréntesis de condición.")
+        if 'if' in tokens and ('(' not in tokens or ')' not in tokens):
+            errores.append(f"Línea {linea_num}: 'if' sin paréntesis de condición.")
 
-        # Validación de for
         if 'for' in tokens:
             if '(' not in tokens or ')' not in tokens:
                 errores.append(f"Línea {linea_num}: 'for' sin paréntesis.")
@@ -96,110 +69,96 @@ def analizar_cpp_palabra_a_palabra(ruta_archivo):
                 if segmento.count(';') != 2:
                     errores.append(f"Línea {linea_num}: Estructura 'for' mal formada.")
 
-        # Validación de cadenas de texto
-        if linea.count('"') % 2 != 0:
-            errores.append(f"Línea {linea_num}: Cadena de texto sin cerrar.")
-
-        # Validación cout con <<
-        if 'cout' in tokens:
-            couts = tokens.count('<')
-            if couts % 2 != 0:
+        if 'cout' in linea:
+            if linea.count('<<') % 2 != 0:
                 errores.append(f"Línea {linea_num}: cout incorrecto, número impar de '<<'")
 
-        # Validación else sin if reciente
         if 'else' in tokens:
             if 'if' not in tokens and not any('if' in tokenizar(lineas[j].strip()) for j in range(max(0, i - 2), i)):
                 errores.append(f"Línea {linea_num}: 'else' sin 'if' anterior.")
 
         estructuras_control = {'if', 'for', 'while', 'else', 'switch'}
-        
-        # Validacion de declaracion de variables por su tipo de dato
-        if linea_num > 4:
-            if tokens[0] == 'int':
-                if tokens[1] in AnalizadorLexico.conteo_variables:
-                    if tokens[2] == ';':
-                        print('')
-                    elif tokens[2] == '=':
-                        if len(tokens) >= 5 and tokens[-1] == ';':
-                        # Validamos si el valor es un número entero (positivo o negativo)
-                            try:
-                                int(tokens[3])
-                                print(f'✔️ Asignación válida: {var_name} = {tokens[3]};')
-                            except ValueError:
-                                errores.append(f"Línea {linea_num + 1}: El valor asignado no es un entero.")
-                        
-                        else:
-                            errores.append(f"Línea {linea_num}: int mal estructurado")
-                    else:
-                        errores.append(f"Línea {linea_num}: int no termina en ;")
+
+        # -------------------------
+        # Validación de arreglos
+        # -------------------------
+        if tokens and tokens[0] in ['int', 'float', 'string', 'char'] and '[' in tokens and ']' in tokens:
+            tipo = tokens[0]
+            try:
+                var_name = tokens[1]
+                index_open = tokens.index('[')
+                index_close = tokens.index(']')
+                size_token = tokens[index_open + 1] if index_close == index_open + 2 else None
+
+                # Validar nombre
+                if var_name not in AnalizadorLexico.conteo_variables:
+                    errores.append(f"Línea {linea_num}: nombre de variable de arreglo inválido")
+
+                # Validar tamaño
+                if size_token and not re.fullmatch(r'\d+', size_token):
+                    errores.append(f"Línea {linea_num}: tamaño del arreglo inválido")
+
+                # Validar finalización con ;
+                if tokens[-1] != ';' and '=' not in tokens:
+                    errores.append(f"Línea {linea_num}: declaración de arreglo no termina con ';'")
+
+                # Validar inicialización si hay '='
+                if '=' in tokens:
+                    igual_index = tokens.index('=')
+                    if '{' not in tokens[igual_index:] or '}' not in tokens[igual_index:]:
+                        errores.append(f"Línea {linea_num}: inicialización de arreglo mal formada")
+
+                if var_name in variables_declaradas:
+                    errores.append(f"Línea {linea_num}: Arreglo '{var_name}' ya declarado anteriormente.")
                 else:
-                    errores.append(f"Línea {linea_num}: nombre de variable invalido")
+                    variables_declaradas.add(var_name)
+                continue
 
-            if tokens[0] == 'float':
-                if tokens[1] in AnalizadorLexico.conteo_variables:
-                    if tokens[2] == ';':
-                        print('')
-                    elif tokens[2] == '=':
-                        if len(tokens) >= 5 and tokens[-1] == ';':
-                        # Validamos si el valor es un flotente (positivo o negativo)
-                            try:
-                                patron = r'^-?\d*\.\d+$'
-                                re.match(patron, token) is not None
-                            except ValueError:
-                                return False
-                        
-                        else:
-                            errores.append(f"Línea {linea_num}: float mal estructurado")
-                    else:
-                        errores.append(f"Línea {linea_num}: float no termina en ;")
+            except Exception:
+                errores.append(f"Línea {linea_num}: error general en la declaración de arreglo")
+                continue
+
+
+        # Declaraciones de variables
+        if len(tokens) >= 5 and tokens[0] in ['int', 'float', 'string', 'char']:
+            tipo = tokens[0]
+            var_name = tokens[1]
+            operador_asign = tokens[2]
+            valor = tokens[3]
+            termina_con_puntoycoma = tokens[-1] == ';'
+
+            if operador_asign != '=' or not termina_con_puntoycoma:
+                errores.append(f"Línea {linea_num}: Declaración de {tipo} mal estructurada")
+            else:
+                if var_name not in AnalizadorLexico.conteo_variables:
+                    errores.append(f"Línea {linea_num}: nombre de variable inválido")
                 else:
-                    errores.append(f"Línea {linea_num}: nombre de variable invalido")
-        
-            if tokens[0] == 'string':
-                print("ENCUENTRA STRING EN TOKEN 0")
-                if len(tokens) >= 5:
-                    var_name = tokens[1]
+                    if tipo == 'int' and not re.fullmatch(r'\d+', valor):
+                        errores.append(f"Línea {linea_num}: El valor asignado no es un entero")
+                    elif tipo == 'float' and not re.fullmatch(r'\d+\.\d+', valor):
+                        errores.append(f"Línea {linea_num}: El valor asignado no es un flotante válido")
+                    elif tipo == 'char':
+                        if not re.fullmatch(r"'.{1}'", valor):
+                            errores.append(f"Línea {linea_num}: El valor asignado no es un char válido")
+                    elif tipo == 'string':
+                        if not re.fullmatch(r'"[^"]*"', valor):
+                            errores.append(f"Línea {linea_num}: El valor asignado no es un string válido")
 
-                    if var_name in AnalizadorLexico.conteo_variables:
-                        if tokens[2] == '=' and tokens[-1] == ';':
-                            valor = tokens[3]
-
-                            # Validar que el valor esté entre comillas dobles
-                            if len(valor) >= 2 and valor.startswith('"') and valor.endswith('"'):
-                                print(f'✔️ Declaración válida: {var_name} = {valor};')
-                            else:
-                                errores.append(f"Línea {linea_num + 1}: El valor asignado {valor} no es un string válido.")
-                        else:
-                            errores.append(f"Línea {linea_num + 1}: Falta '=' o ';' en la declaración de string.")
-                    else:
-                        errores.append(f"Línea {linea_num + 1}: Variable '{var_name}' incorrectamente declarada")
+                if var_name in variables_declaradas:
+                    errores.append(f"Línea {linea_num}: Variable '{var_name}' ya declarada anteriormente.")
                 else:
-                    errores.append(f"Línea {linea_num + 1}: Declaración de string incorrecta.")
+                    variables_declaradas.add(var_name)
 
 
-
-
-
+        # Verificación de punto y coma
         if tokens:
             termina_con_puntoycoma = tokens[-1] == ';'
             comienza_con_estructura = tokens[0] in estructuras_control
             es_bloque = tokens[0] in ['{', '}', '#']
-            es_declaracion_funcion = 'main' in tokens or ('(' in tokens and '{' in tokens)
+            es_declaracion_funcion = 'main' in tokens
 
             if not termina_con_puntoycoma and not comienza_con_estructura and not es_bloque and not es_declaracion_funcion:
                 errores.append(f"Línea {linea_num}: Instrucción no termina con ';'")
-
-        # Registrar variables declaradas y detectar duplicadas
-        tipos = ['int', 'float', 'char', 'bool', 'double', 'string']
-        if any(tipo in tokens for tipo in tipos):
-            tipo_idx = next((i for i, t in enumerate(tokens) if t in tipos), -1)
-            if tipo_idx != -1 and tipo_idx + 1 < len(tokens):
-                nombre_var = tokens[tipo_idx + 1]
-                if re.match(r'[a-zA-Z_]\w*', nombre_var):
-                    if nombre_var in variables_declaradas:
-                        errores.append(f"Línea {linea_num}: Variable '{nombre_var}' ya declarada anteriormente.")
-                    else:
-                        variables_declaradas.add(nombre_var)
 
         # Verificación de identificadores desconocidos
         for token in tokens:
@@ -213,8 +172,6 @@ def analizar_cpp_palabra_a_palabra(ruta_archivo):
                 token not in variables_declaradas:
                     errores.append(f"Línea {linea_num}: Identificador no declarado o inválido: '{token}'")
 
-                
-
     if pila_llaves:
         errores.append("Error: hay llaves sin cerrar.")
     if pila_par:
@@ -223,11 +180,7 @@ def analizar_cpp_palabra_a_palabra(ruta_archivo):
     if errores:
         salida.append("Errores encontrados:")
         salida.extend(errores)
-        print("\nErrores encontrados:")
-        for error in errores:
-            print(error)
     else:
-        print("\nArchivo sintácticamente correcto (nivel palabra a palabra básico).")
         salida.append("Archivo sintácticamente correcto (nivel palabra a palabra básico).")
 
     return "\n".join(salida)

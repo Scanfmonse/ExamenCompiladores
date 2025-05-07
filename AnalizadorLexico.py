@@ -19,7 +19,7 @@ def analizar_codigo(content):
         'export', 'false', 'friend', 'mutable', 'namespace', 'new', 'operator',
         'private', 'protected', 'public', 'reinterpret_cast', 'static_cast',
         'template', 'this', 'throw', 'true', 'try', 'typeid', 'typename',
-        'using', 'virtual', 'wchar_t', 'cout', 'cin', 'endl', 'return','stdio','printf','scanf'        
+        'using', 'virtual', 'wchar_t', 'cout', 'cin', 'endl', 'return','stdio','printf','scanf','include','h'        
         
     }
 
