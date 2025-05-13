@@ -69,8 +69,8 @@ def analizar_cpp_palabra_a_palabra(ruta_archivo):
                 if segmento.count(';') != 2:
                     errores.append(f"Línea {linea_num}: Estructura 'for' mal formada.")
 
-        if 'cout' in linea:
-            if linea.count('<<') % 2 != 0:
+        if tokens[0] == 'cout':
+            if linea.count('<') % 2 != 0:
                 errores.append(f"Línea {linea_num}: cout incorrecto, número impar de '<<'")
 
         if 'else' in tokens:
@@ -104,11 +104,6 @@ def analizar_cpp_palabra_a_palabra(ruta_archivo):
                 else:
                     errores.append(f"Línea {linea_num}: tamaño del arreglo no especificado")
 
-                # Validar finalización con ;
-                if tokens[-1] != ';' and '=' not in tokens:
-                    errores.append(f"Línea {linea_num}: declaración de arreglo no termina con ';'")
-
-                # Validar inicialización si hay '='
                 if '=' in tokens:
                     igual_index = tokens.index('=')
                     if tokens[igual_index + 1] != '{' or tokens[-2] != '}':
