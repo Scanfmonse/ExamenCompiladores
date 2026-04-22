@@ -4,7 +4,7 @@
   "metadata": {
     "colab": {
       "provenance": [],
-      "authorship_tag": "ABX9TyMqr1mCYbo11KqtL44qpZVJ",
+      "authorship_tag": "ABX9TyOhH+a5hwVD7qxAvdeW5M0O",
       "include_colab_link": true
     },
     "kernelspec": {
@@ -109,7 +109,6 @@
         "rf.fit(X, y)\n",
         "\n",
         "# 3. Calcular estadísticas actualizadas para la Jornada 16\n",
-        "# Usamos los resultados de la Jornada 15 para simular los puntos, rachas y posiciones actuales\n",
         "equipos = {}\n",
         "for i, row in df.iterrows():\n",
         "    loc = row['equipo_local']\n",
@@ -151,7 +150,7 @@
         "]\n",
         "\n",
         "# 5. Realizar predicciones\n",
-        "print(\"=== PREDICCIONES JORNADA 16 ===\\n\")\n",
+        "print(\"PREDICCIONES JORNADA 16\\n\")\n",
         "for loc, vis in partidos_j16:\n",
         "    # Extraer las estadísticas calculadas para cada equipo\n",
         "    t_loc = equipos[loc]\n",
@@ -170,11 +169,11 @@
         "\n",
         "    # Formatear la salida del resultado\n",
         "    if pred == 0:\n",
-        "        res_str = 'Opción C (Gana visitante)'\n",
+        "        res_str = 'Gana visitante'\n",
         "    elif pred == 1:\n",
-        "        res_str = 'Opción B (Empatan)'\n",
+        "        res_str = 'Empatan'\n",
         "    else:\n",
-        "        res_str = 'Opción A (Gana local)'\n",
+        "        res_str = 'Gana local'\n",
         "\n",
         "    print(f\"{loc} vs {vis}\")\n",
         "    print(f\"Predicción: {res_str}\\n\")"
@@ -184,42 +183,42 @@
           "base_uri": "https://localhost:8080/"
         },
         "id": "6ka2QXmmiUIp",
-        "outputId": "ed494258-d08f-459d-9832-0c5d8056050a"
+        "outputId": "5c8062fa-96c1-4c66-eac7-b30057c32815"
       },
-      "execution_count": 5,
+      "execution_count": 7,
       "outputs": [
         {
           "output_type": "stream",
           "name": "stdout",
           "text": [
-            "=== PREDICCIONES JORNADA 16 ===\n",
+            "PREDICCIONES JORNADA 16\n",
             "\n",
             "Querétaro vs Cruz Azul\n",
-            "Predicción: Opción C (Gana visitante)\n",
+            "Predicción: Gana visitante\n",
             "\n",
             "Pumas vs FC Juárez\n",
-            "Predicción: Opción A (Gana local)\n",
+            "Predicción: Gana local\n",
             "\n",
             "Monterrey vs Puebla\n",
-            "Predicción: Opción B (Empatan)\n",
+            "Predicción: Empatan\n",
             "\n",
             "León vs América\n",
-            "Predicción: Opción A (Gana local)\n",
+            "Predicción: Gana local\n",
             "\n",
             "Atlas vs Tigres\n",
-            "Predicción: Opción A (Gana local)\n",
+            "Predicción: Gana local\n",
             "\n",
             "Atlético San Luis vs Santos\n",
-            "Predicción: Opción A (Gana local)\n",
+            "Predicción: Gana local\n",
             "\n",
             "Mazatlán vs Toluca\n",
-            "Predicción: Opción C (Gana visitante)\n",
+            "Predicción: Gana visitante\n",
             "\n",
             "Necaxa vs Chivas\n",
-            "Predicción: Opción C (Gana visitante)\n",
+            "Predicción: Gana visitante\n",
             "\n",
             "Tijuana vs Pachuca\n",
-            "Predicción: Opción C (Gana visitante)\n",
+            "Predicción: Gana visitante\n",
             "\n"
           ]
         }
