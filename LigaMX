@@ -1,0 +1,77 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "authorship_tag": "ABX9TyP1M5Sy8AhXUz9sQL+bwpTP",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/Scanfmonse/ExamenCompiladores/blob/master/LigaMX\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "YvvAotELhBpa"
+      },
+      "outputs": [],
+      "source": [
+        "# Predicción de Resultados de Liga MX con Random Forest\n",
+        "\n",
+        "Libreta didáctica para Google Colab\n",
+        "## Objetivo\n",
+        "\n",
+        "Aplicar Machine Learning supervisado para predecir resultados de partidos de Liga MX usando Random Forest.\n",
+        "\n",
+        "import pandas as pd\n",
+        "import numpy as np\n",
+        "\n",
+        "## Cargar dataset\n",
+        "df = pd.read_csv('dataset_liga_mx_jornadas_13_14_15_base.csv')\n",
+        "df.head()\n",
+        "\n",
+        "## Selección de features\n",
+        "features = ['diff_puntos','diff_racha','diff_posicion']\n",
+        "X = df[features]\n",
+        "y = df['resultado']\n",
+        "\n",
+        "## Entrenamiento del Random Forest\n",
+        "from sklearn.ensemble import RandomForestClassifier\n",
+        "rf = RandomForestClassifier(n_estimators=300, max_depth=5, random_state=42)\n",
+        "rf.fit(X, y)\n",
+        "\n",
+        "## Importancia de variables\n",
+        "importances = pd.Series(rf.feature_importances_, index=features)\n",
+        "importances.sort_values(ascending=False)\n",
+        "\n",
+        "## Visualización de un árbol\n",
+        "from sklearn.tree import plot_tree\n",
+        "import matplotlib.pyplot as plt\n",
+        "plt.figure(figsize=(20,10))\n",
+        "plot_tree(rf.estimators_[0], feature_names=features, class_names=['Visita','Empate','Local'], filled=True)\n",
+        "plt.show()\n",
+        "\n",
+        "## Ética y uso responsable\n",
+        "Este modelo es educativo. No debe usarse para apuestas ni decisiones financieras."
+      ]
+    }
+  ]
+}
