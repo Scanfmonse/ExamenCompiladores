@@ -4,7 +4,7 @@
   "metadata": {
     "colab": {
       "provenance": [],
-      "authorship_tag": "ABX9TyOhH+a5hwVD7qxAvdeW5M0O",
+      "authorship_tag": "ABX9TyNAavJMVP8FjISW391KQhm5",
       "include_colab_link": true
     },
     "kernelspec": {
@@ -28,7 +28,7 @@
     },
     {
       "cell_type": "code",
-      "execution_count": 2,
+      "execution_count": null,
       "metadata": {
         "colab": {
           "base_uri": "https://localhost:8080/",
@@ -185,7 +185,7 @@
         "id": "6ka2QXmmiUIp",
         "outputId": "5c8062fa-96c1-4c66-eac7-b30057c32815"
       },
-      "execution_count": 7,
+      "execution_count": null,
       "outputs": [
         {
           "output_type": "stream",
@@ -225,10 +225,175 @@
       ]
     },
     {
+      "cell_type": "markdown",
+      "source": [
+        "#CORRECCION LIGA 17"
+      ],
+      "metadata": {
+        "id": "ZCjJoZNTUIhc"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import pandas as pd\n",
+        "import numpy as np\n",
+        "from sklearn.ensemble import RandomForestClassifier\n",
+        "\n",
+        "# 1. Cargar el dataset original\n",
+        "df = pd.read_csv('dataset_liga_mx_jornadas_13_14_15_base.csv')\n",
+        "\n",
+        "# 2. Selección de variables (features)\n",
+        "features = ['diff_puntos', 'diff_racha', 'diff_posicion']\n",
+        "X = df[features]\n",
+        "y = df['resultado']\n",
+        "\n",
+        "# 3. Entrenamiento del modelo optimizado\n",
+        "rf = RandomForestClassifier(\n",
+        "    n_estimators=200,\n",
+        "    max_depth=3,\n",
+        "    min_samples_leaf=4,\n",
+        "    class_weight='balanced',\n",
+        "    random_state=42\n",
+        ")\n",
+        "rf.fit(X, y)\n",
+        "\n",
+        "# 4. Calcular estadísticas base de los equipos\n",
+        "equipos = {}\n",
+        "for i, row in df.iterrows():\n",
+        "    loc = row['equipo_local']\n",
+        "    vis = row['equipo_visita']\n",
+        "    res = row['resultado'] # 0: Gana visita, 1: Empate, 2: Gana local\n",
+        "\n",
+        "    p_l = row['local_puntos']\n",
+        "    p_v = row['visita_puntos']\n",
+        "    r_l = row['local_racha']\n",
+        "    r_v = row['visita_racha']\n",
+        "\n",
+        "    if res == 2: # Gana local\n",
+        "        equipos[loc] = {'pts': p_l + 3, 'racha': r_l + 3, 'old_pos': row['local_posicion']}\n",
+        "        equipos[vis] = {'pts': p_v, 'racha': r_v, 'old_pos': row['visita_posicion']}\n",
+        "    elif res == 1: # Empate\n",
+        "        equipos[loc] = {'pts': p_l + 1, 'racha': r_l + 1, 'old_pos': row['local_posicion']}\n",
+        "        equipos[vis] = {'pts': p_v + 1, 'racha': r_v + 1, 'old_pos': row['visita_posicion']}\n",
+        "    else: # Gana visita\n",
+        "        equipos[loc] = {'pts': p_l, 'racha': r_l, 'old_pos': row['local_posicion']}\n",
+        "        equipos[vis] = {'pts': p_v + 3, 'racha': r_v + 3, 'old_pos': row['visita_posicion']}\n",
+        "\n",
+        "# Ordenar para obtener posiciones actualizadas\n",
+        "equipos_ordenados = sorted(equipos.items(), key=lambda x: (-x[1]['pts'], x[1]['old_pos']))\n",
+        "for rank, (equipo, stats) in enumerate(equipos_ordenados, start=1):\n",
+        "    equipos[equipo]['pos'] = rank\n",
+        "\n",
+        "# 5. Lista de partidos de la Jornada 17\n",
+        "partidos_j17 = [\n",
+        "    ('Puebla', 'Querétaro'),\n",
+        "    ('Pachuca', 'Pumas'),\n",
+        "    ('Tigres', 'Mazatlán'),\n",
+        "    ('Toluca', 'León'),\n",
+        "    ('Chivas', 'Tijuana'),\n",
+        "    ('América', 'Atlas'),\n",
+        "    ('FC Juárez', 'Atlético San Luis'),\n",
+        "    ('Santos', 'Monterrey'),\n",
+        "    ('Cruz Azul', 'Necaxa')\n",
+        "]\n",
+        "\n",
+        "# 6. Realizar predicciones\n",
+        "print(\"PREDICCIONES JORNADA 17 (Modelo Optimizado)\\n\")\n",
+        "print(\"-\" * 50)\n",
+        "for loc, vis in partidos_j17:\n",
+        "    # Verificamos que los equipos existan en el dataset previo\n",
+        "    if loc in equipos and vis in equipos:\n",
+        "        t_loc = equipos[loc]\n",
+        "        t_vis = equipos[vis]\n",
+        "\n",
+        "        diff_puntos = t_loc['pts'] - t_vis['pts']\n",
+        "        diff_racha = t_loc['racha'] - t_vis['racha']\n",
+        "        diff_posicion = t_loc['pos'] - t_vis['pos']\n",
+        "\n",
+        "        X_pred = pd.DataFrame([[diff_puntos, diff_racha, diff_posicion]], columns=features)\n",
+        "\n",
+        "        pred = rf.predict(X_pred)[0]\n",
+        "        proba = rf.predict_proba(X_pred)[0]\n",
+        "\n",
+        "        if pred == 0:\n",
+        "            res_str = f'Option C (Gana visitante)'\n",
+        "            confianza = proba[0]\n",
+        "        elif pred == 1:\n",
+        "            res_str = 'Option B (Empatan)'\n",
+        "            confianza = proba[1]\n",
+        "        else:\n",
+        "            res_str = f'Option A (Gana local)'\n",
+        "            confianza = proba[2]\n",
+        "\n",
+        "        print(f\"Partido: {loc} vs {vis} (Local: {loc})\")\n",
+        "        print(f\"Respuesta Modelo: {res_str}\")\n",
+        "        print(f\"Seguridad de la predicción: {confianza*100:.1f}%\\n\")\n",
+        "    else:\n",
+        "        print(f\"Partido: {loc} vs {vis}\")\n",
+        "        print(\"Error: No hay datos suficientes de uno o ambos equipos en el CSV.\\n\")"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "nvQXs2cyUHBg",
+        "outputId": "fb14e942-08d6-42bb-b59e-aeeb8c907abe"
+      },
+      "execution_count": 4,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "PREDICCIONES JORNADA 17 (Modelo Optimizado)\n",
+            "\n",
+            "--------------------------------------------------\n",
+            "Partido: Puebla vs Querétaro (Local: Puebla)\n",
+            "Respuesta Modelo: Option A (Gana local)\n",
+            "Seguridad de la predicción: 35.5%\n",
+            "\n",
+            "Partido: Pachuca vs Pumas (Local: Pachuca)\n",
+            "Respuesta Modelo: Option A (Gana local)\n",
+            "Seguridad de la predicción: 35.8%\n",
+            "\n",
+            "Partido: Tigres vs Mazatlán (Local: Tigres)\n",
+            "Respuesta Modelo: Option A (Gana local)\n",
+            "Seguridad de la predicción: 34.6%\n",
+            "\n",
+            "Partido: Toluca vs León (Local: Toluca)\n",
+            "Respuesta Modelo: Option A (Gana local)\n",
+            "Seguridad de la predicción: 34.3%\n",
+            "\n",
+            "Partido: Chivas vs Tijuana (Local: Chivas)\n",
+            "Respuesta Modelo: Option A (Gana local)\n",
+            "Seguridad de la predicción: 34.6%\n",
+            "\n",
+            "Partido: América vs Atlas (Local: América)\n",
+            "Respuesta Modelo: Option A (Gana local)\n",
+            "Seguridad de la predicción: 35.5%\n",
+            "\n",
+            "Partido: FC Juárez vs Atlético San Luis (Local: FC Juárez)\n",
+            "Respuesta Modelo: Option A (Gana local)\n",
+            "Seguridad de la predicción: 35.1%\n",
+            "\n",
+            "Partido: Santos vs Monterrey (Local: Santos)\n",
+            "Respuesta Modelo: Option A (Gana local)\n",
+            "Seguridad de la predicción: 35.4%\n",
+            "\n",
+            "Partido: Cruz Azul vs Necaxa (Local: Cruz Azul)\n",
+            "Respuesta Modelo: Option A (Gana local)\n",
+            "Seguridad de la predicción: 34.3%\n",
+            "\n"
+          ]
+        }
+      ]
+    },
+    {
       "cell_type": "code",
       "source": [],
       "metadata": {
-        "id": "1_nZVHWJiWN5"
+        "id": "NbDy0IhyUbLI"
       },
       "execution_count": null,
       "outputs": []
